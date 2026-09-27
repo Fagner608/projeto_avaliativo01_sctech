@@ -205,6 +205,55 @@ def calcular_metricas(registros):
     return metricas
 
 
+def processar_coluna(registros, coluna, funcao_transformacao, nome_saida=None):
+    """Aplica uma função de transformação a uma coluna dos registros."""
+    destino = nome_saida or coluna
+
+    for linha in registros:
+        linha[destino] = funcao_transformacao(linha[coluna])
+
+    return registros
+
+
+def segmentar_clientes(registros):
+    """Agrupa o gasto por cliente e classifica cada total em um segmento."""
+    total_por_cliente = defaultdict(float)
+
+    for linha in registros:
+        total_por_cliente[linha["cliente"]] += linha["receita_total"]
+
+    clientes = [
+        {"cliente": cliente, "total_gasto": total}
+        for cliente, total in total_por_cliente.items()
+    ]
+    clientes = processar_coluna(
+        clientes,
+        "total_gasto",
+        lambda total: round(total, 2),
+    )
+    clientes = processar_coluna(
+        clientes,
+        "total_gasto",
+        lambda total: "Ouro" if total > 15000 else "Prata" if total >= 5000 else "Bronze",
+        nome_saida="segmento",
+    )
+    clientes = sorted(clientes, key=lambda linha: linha["total_gasto"], reverse=True)
+    top_clientes = clientes[:10]
+    distribuicao = {"Bronze": 0, "Prata": 0, "Ouro": 0}
+
+    for cliente in clientes:
+        distribuicao[cliente["segmento"]] += 1
+
+    print("\n=== TOP 10 CLIENTES ===")
+    for cliente in top_clientes:
+        print(cliente)
+    print("\n=== DISTRIBUIÇÃO POR SEGMENTO ===")
+    for segmento, quantidade in distribuicao.items():
+        print({"segmento": segmento, "quantidade": quantidade})
+
+    return clientes, top_clientes, distribuicao
+
+
 def main():
     """Executa o fluxo de preparação e análise das vendas."""
     diretorio_projeto = Path(__file__).resolve().parent
@@ -215,6 +264,7 @@ def main():
     registros_limpos, _ = limpar_dados(registros)
     registros_transformados = criar_colunas_derivadas(registros_limpos)
     calcular_metricas(registros_transformados)
+    segmentar_clientes(registros_transformados)
 
 
 if __name__ == "__main__":
