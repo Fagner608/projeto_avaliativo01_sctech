@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 
 def gerar_dataset_vendas(caminho_csv="vendas.csv", n_registros=200, seed=42):
-    """Gera um dataset sintetico de vendas com dados sujos e grava em CSV."""
+    """Gera um dataset sintético de vendas com dados sujos e grava em CSV."""
     random.seed(seed)
     produtos = ["Notebook", "Smartphone", "Tablet", "Monitor",
                 "Teclado", "Mouse", "Headset"]
