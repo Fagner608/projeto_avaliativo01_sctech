@@ -1,4 +1,5 @@
 import csv
+import json
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -254,6 +255,52 @@ def segmentar_clientes(registros):
     return clientes, top_clientes, distribuicao
 
 
+def calcular_estatisticas_gerais(registros, clientes, distribuicao):
+    """Resume os principais totais do conjunto de vendas analisado."""
+    receita_total = sum(linha["receita_total"] for linha in registros)
+    quantidade_total = sum(linha["quantidade"] for linha in registros)
+    numero_vendas = len(registros)
+
+    return {
+        "receita_total": round(receita_total, 2),
+        "quantidade_total": quantidade_total,
+        "numero_vendas": numero_vendas,
+        "ticket_medio": round(receita_total / numero_vendas, 2) if numero_vendas else 0,
+        "numero_clientes": len(clientes),
+        "clientes_por_segmento": distribuicao,
+    }
+
+
+def exportar_resultados(metricas, clientes, estatisticas, diretorio_saida):
+    """Exporta as métricas e a segmentação em CSV e as estatísticas em JSON."""
+    diretorio_saida.mkdir(parents=True, exist_ok=True)
+    caminho_metricas = diretorio_saida / "metricas_por_mes.csv"
+    caminho_clientes = diretorio_saida / "segmentacao_clientes.csv"
+    caminho_estatisticas = diretorio_saida / "estatisticas_gerais.json"
+
+    with open(caminho_metricas, "w", newline="", encoding="utf-8-sig") as arquivo:
+        colunas = ["ano", "mes", "receita_total", "quantidade", "n_vendas"]
+        escritor = csv.DictWriter(arquivo, fieldnames=colunas)
+        escritor.writeheader()
+        escritor.writerows(metricas["por_mes"])
+
+    with open(caminho_clientes, "w", newline="", encoding="utf-8-sig") as arquivo:
+        colunas = ["cliente", "total_gasto", "segmento"]
+        escritor = csv.DictWriter(arquivo, fieldnames=colunas)
+        escritor.writeheader()
+        escritor.writerows(clientes)
+
+    with open(caminho_estatisticas, "w", encoding="utf-8") as arquivo:
+        json.dump(estatisticas, arquivo, indent=4, ensure_ascii=False)
+
+    with open(caminho_estatisticas, "r", encoding="utf-8") as arquivo:
+        estatisticas_conferidas = json.load(arquivo)
+
+    print("\n=== CONFERÊNCIA DO JSON EXPORTADO ===")
+    print(estatisticas_conferidas)
+    return estatisticas_conferidas
+
+
 def main():
     """Executa o fluxo de preparação e análise das vendas."""
     diretorio_projeto = Path(__file__).resolve().parent
@@ -263,8 +310,10 @@ def main():
     inspecionar_dados(registros)
     registros_limpos, _ = limpar_dados(registros)
     registros_transformados = criar_colunas_derivadas(registros_limpos)
-    calcular_metricas(registros_transformados)
-    segmentar_clientes(registros_transformados)
+    metricas = calcular_metricas(registros_transformados)
+    clientes, _, distribuicao = segmentar_clientes(registros_transformados)
+    estatisticas = calcular_estatisticas_gerais(registros_transformados, clientes, distribuicao)
+    exportar_resultados(metricas, clientes, estatisticas, diretorio_projeto / "outputs")
 
 
 if __name__ == "__main__":

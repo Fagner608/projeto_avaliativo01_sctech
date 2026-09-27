@@ -1,0 +1,12 @@
+{
+    "receita_total": 1290346.3,
+    "quantidade_total": 1031,
+    "numero_vendas": 183,
+    "ticket_medio": 7051.07,
+    "numero_clientes": 50,
+    "clientes_por_segmento": {
+        "Bronze": 6,
+        "Prata": 10,
+        "Ouro": 34
+    }
+}
