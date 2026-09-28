@@ -1,5 +1,9 @@
 # Tarefas do projeto
 
+## planejamento
+
+A estratégia foi seguir o fluxo sugerido de branches, separando cada etapa do projeto. A ordem usada foi leitura e limpeza, análise de métricas, segmentação, exportação e documentação. Após cada etapa, as alterações foram integradas na `develop` e, ao final, na `main`.
+
 ## A fazer
 
 - [ ] Revisar o README

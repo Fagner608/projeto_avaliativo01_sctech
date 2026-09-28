@@ -40,4 +40,4 @@ Os registros com data inválida ou valores ausentes em quantidade e preço são 
 
 ## Vídeo de demonstração
 
-Link: adicionar após a gravação
+Link: [gravacao](https://drive.google.com/file/d/1fJs7hGUaU2LPEu-gbfXNV7ZsgGm3gjom/view?usp=sharing)
