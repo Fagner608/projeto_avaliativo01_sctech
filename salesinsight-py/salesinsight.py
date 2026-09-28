@@ -4,11 +4,15 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable
 
 from src.data.gerador_dataset.gerar_dataset_vendas import gerar_dataset_vendas
 
+Registro = dict[str, Any]
+Metricas = dict[str, list[Registro]]
 
-def carregar_dataset(caminho_csv):
+
+def carregar_dataset(caminho_csv: str | Path) -> list[Registro]:
     """Lê o CSV e retorna uma lista de dicionários, um por registro."""
     with open(caminho_csv, "r", encoding="utf-8") as arquivo:
         leitor = csv.DictReader(arquivo)
@@ -16,7 +20,7 @@ def carregar_dataset(caminho_csv):
     return registros
 
 
-def inspecionar_dados(registros):
+def inspecionar_dados(registros: list[Registro]) -> list[Registro]:
     """Exibe a estrutura, os valores ausentes e uma amostra do dataset."""
     total = len(registros)
     colunas = list(registros[0].keys()) if registros else []
@@ -39,7 +43,7 @@ def inspecionar_dados(registros):
     return registros
 
 
-def limpar_dados(registros):
+def limpar_dados(registros: list[Registro]) -> tuple[list[Registro], dict[str, int]]:
     """Limpa os registros e retorna os dados válidos e o relatório da operação."""
     relatorio = {
         "iniciais": len(registros),
@@ -73,7 +77,8 @@ def limpar_dados(registros):
         linha["preco_unitario"] = float(linha["preco_unitario"])
 
         nome_original = linha["cliente"]
-        numero_cliente = extrair_numero_cliente.search(nome_original)
+        nome_sem_ruido = re.sub(r"[^A-Za-z0-9]", "", nome_original)
+        numero_cliente = extrair_numero_cliente.search(nome_sem_ruido)
         if numero_cliente:
             linha["cliente"] = f"Cliente_{numero_cliente.group()}"
 
@@ -88,7 +93,7 @@ def limpar_dados(registros):
     return limpos, relatorio
 
 
-def criar_colunas_derivadas(registros):
+def criar_colunas_derivadas(registros: list[Registro]) -> list[Registro]:
     """Acrescenta as colunas de receita e período aos registros limpos."""
     nomes_meses = {
         1: "Janeiro",
@@ -138,7 +143,7 @@ def criar_colunas_derivadas(registros):
     return transformados
 
 
-def calcular_metricas(registros):
+def calcular_metricas(registros: list[Registro]) -> Metricas:
     """Calcula as métricas de vendas por mês, produto, categoria e região."""
     totais_mes = defaultdict(lambda: {"receita_total": 0.0, "quantidade": 0, "n_vendas": 0})
     totais_produto = defaultdict(float)
@@ -206,7 +211,12 @@ def calcular_metricas(registros):
     return metricas
 
 
-def processar_coluna(registros, coluna, funcao_transformacao, nome_saida=None):
+def processar_coluna(
+    registros: list[Registro],
+    coluna: str,
+    funcao_transformacao: Callable[[Any], Any],
+    nome_saida: str | None = None,
+) -> list[Registro]:
     """Aplica uma função de transformação a uma coluna dos registros."""
     destino = nome_saida or coluna
 
@@ -216,7 +226,9 @@ def processar_coluna(registros, coluna, funcao_transformacao, nome_saida=None):
     return registros
 
 
-def segmentar_clientes(registros):
+def segmentar_clientes(
+    registros: list[Registro],
+) -> tuple[list[Registro], list[Registro], dict[str, int]]:
     """Agrupa o gasto por cliente e classifica cada total em um segmento."""
     total_por_cliente = defaultdict(float)
 
@@ -255,7 +267,11 @@ def segmentar_clientes(registros):
     return clientes, top_clientes, distribuicao
 
 
-def calcular_estatisticas_gerais(registros, clientes, distribuicao):
+def calcular_estatisticas_gerais(
+    registros: list[Registro],
+    clientes: list[Registro],
+    distribuicao: dict[str, int],
+) -> dict[str, Any]:
     """Resume os principais totais do conjunto de vendas analisado."""
     receita_total = sum(linha["receita_total"] for linha in registros)
     quantidade_total = sum(linha["quantidade"] for linha in registros)
@@ -271,7 +287,12 @@ def calcular_estatisticas_gerais(registros, clientes, distribuicao):
     }
 
 
-def exportar_resultados(metricas, clientes, estatisticas, diretorio_saida):
+def exportar_resultados(
+    metricas: Metricas,
+    clientes: list[Registro],
+    estatisticas: dict[str, Any],
+    diretorio_saida: Path,
+) -> dict[str, Any]:
     """Exporta as métricas e a segmentação em CSV e as estatísticas em JSON."""
     diretorio_saida.mkdir(parents=True, exist_ok=True)
     caminho_metricas = diretorio_saida / "metricas_por_mes.csv"
@@ -301,7 +322,7 @@ def exportar_resultados(metricas, clientes, estatisticas, diretorio_saida):
     return estatisticas_conferidas
 
 
-def main():
+def main() -> None:
     """Executa o fluxo de preparação e análise das vendas."""
     diretorio_projeto = Path(__file__).resolve().parent
     caminho_csv = diretorio_projeto / "vendas.csv"
