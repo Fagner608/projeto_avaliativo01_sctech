@@ -1,8 +1,14 @@
 import csv
 import random
 from datetime import datetime, timedelta
+from pathlib import Path
 
-def gerar_dataset_vendas(caminho_csv="vendas.csv", n_registros=200, seed=42):
+
+def gerar_dataset_vendas(
+    caminho_csv: str | Path = "vendas.csv",
+    n_registros: int = 200,
+    seed: int = 42,
+) -> None:
     """Gera um dataset sintético de vendas com dados sujos e grava em CSV."""
     random.seed(seed)
     produtos = ["Notebook", "Smartphone", "Tablet", "Monitor",
