@@ -73,7 +73,8 @@ def limpar_dados(registros):
         linha["preco_unitario"] = float(linha["preco_unitario"])
 
         nome_original = linha["cliente"]
-        numero_cliente = extrair_numero_cliente.search(nome_original)
+        nome_sem_ruido = re.sub(r"[^A-Za-z0-9]", "", nome_original)
+        numero_cliente = extrair_numero_cliente.search(nome_sem_ruido)
         if numero_cliente:
             linha["cliente"] = f"Cliente_{numero_cliente.group()}"
 
